@@ -1,0 +1,80 @@
+# simple weather app GUI
+# importing the libraries
+from tkinter import *
+import json
+import requests
+import datetime
+
+# frame data
+frame = Tk()
+frame.title("Weather APP")
+frame.geometry('500x300')
+
+# dates
+current_datetime = datetime.datetime.now()
+hour = Label(frame, text=current_datetime.strftime('%I:%M %p'), bg='white', font=("Arial", 15, "bold"))
+hour.place(x=5, y=130)
+
+# City Search
+canvas = Canvas(frame, width=500, height=500)
+canvas.pack(fill=BOTH, expand=YES)
+city_name = StringVar()
+city_entry = Entry(frame, textvariable=city_name, width=30)
+city_entry.pack(anchor='n', expand=YES, ipady=10)
+canvas_entry = canvas.create_window(158, 8, anchor='nw', window=city_entry)
+
+
+def city_name():
+    try:
+        # API Call
+        api_key = 'aecfde14dcb361d15aab7f8f6791cdb1'
+        api_request = requests.get("https://api.openweathermap.org/data/2.5/weather?q="
+                                   + city_entry.get() + "&units=metric&appid=" + api_key)
+
+        api = json.loads(api_request.content)
+
+        # check if the city is found in the response
+        if api.get('cod') == '404':
+            # city not found
+            canvas.create_text(100, 50, text="City not found!", fill="white", font=("Arial", 15, "bold"))
+            return
+
+        # temperature
+        correct_temperature = api['main']['temp']
+        humidity = api['main']['humidity']
+        tempmin = api['main']['temp_min']
+        tempmax = api['main']['temp_max']
+
+        # country
+        correct_country = api['sys']['country']
+        city = api['name']
+
+        # Adding the received info into the screen
+        canvas.create_text(100, 110, text=f"Temperature: {correct_temperature}", fill="#535878",
+                           font=("Arial", 15, "bold"))
+        canvas.create_text(70, 130, text=f"Humidity: {humidity}", fill="#535878", font=("Arial", 15, "bold"))
+        canvas.create_text(89, 150, text=f"Min.Temp: {tempmin}", fill="#535878", font=("Arial", 15, "bold"))
+        canvas.create_text(91, 170, text=f"Max.Temp: {tempmax}", fill="#535878", font=("Arial", 15, "bold"))
+        canvas.create_text(65, 190, text=f"Country: {correct_country}", fill="#535878", font=("Arial", 15, "bold"))
+        canvas.create_text(70, 210, text=f"City: {city}", fill="#535878", font=("Arial", 15, "bold"))
+
+    except Exception as e:
+        print("An error occurred:", str(e))
+
+
+# Theme for the respective time the application is used
+if 8 <= int(current_datetime.strftime('%I')) <= 17:
+    bg = PhotoImage(file="moon.png")
+else:
+    bg = PhotoImage(file='images.png')
+
+
+canvas.create_image(0, 0, image=bg, anchor=NW)
+canvas.create_text(400, 100, text="Hi", fill="white", font=("Arial", 30, "italic"))
+
+# button
+city_button = Button(frame, text="Search", command=city_name, bg="#9DB0CE", fg='white', font=("Arial", 10,))
+city_button.pack(padx=5)
+canvas_entry = canvas.create_window(223, 32, anchor='nw', window=city_button)
+
+frame.mainloop()
